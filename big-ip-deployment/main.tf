@@ -75,6 +75,15 @@ module "external-network-security-group-public" {
   ingress_cidr_blocks = var.AllowedIPs
   ingress_rules       = ["http-80-tcp", "https-443-tcp"]
 
+  # Allow BIG-IP to BIG-IP communication
+  computed_ingress_with_source_security_group_id = [
+    {
+      rule                     = "all-all"
+      source_security_group_id = module.external-network-security-group-public.security_group_id
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
+
   # Allow ec2 instances outbound Internet connectivity
   egress_cidr_blocks = ["0.0.0.0/0"]
   egress_rules       = ["all-all"]
@@ -94,6 +103,15 @@ module "mgmt-network-security-group" {
 
   ingress_cidr_blocks = var.AllowedIPs
   ingress_rules       = ["https-443-tcp", "https-8443-tcp", "ssh-tcp"]
+
+  # Allow BIG-IP to BIG-IP communication
+  computed_ingress_with_source_security_group_id = [
+    {
+      rule                     = "all-all"
+      source_security_group_id = module.mgmt-network-security-group.security_group_id
+    }
+  ]
+  number_of_computed_ingress_with_source_security_group_id = 1
 
   # Allow ec2 instances outbound Internet connectivity
   egress_cidr_blocks = ["0.0.0.0/0"]

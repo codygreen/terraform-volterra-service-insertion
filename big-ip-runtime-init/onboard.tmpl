@@ -31,6 +31,29 @@ runtime_parameters:
       type: compute
       environment: aws
       field: hostname
+  - name: SELF_IP_EXTERNAL
+    type: metadata
+    metadataProvider:
+      environment: aws
+      type: network
+      field: local-ipv4s
+      index: 1
+  - name: DEFAULT_ROUTE
+    type: metadata
+    metadataProvider:
+      environment: aws
+      type: network
+      field: subnet-ipv4-cidr-block
+      index: 1
+  - name: REGION
+    type: url
+    value: http://169.254.169.254/latest/dynamic/instance-identity/document
+    query: region
+    headers:
+      - name: Content-type
+        value: json
+      - name: User-Agent
+        value: bigip-ve
   - name: USER_NAME
     type: static
     value: ${bigip_username}
@@ -120,7 +143,28 @@ extension_services:
             shell: bash
             userType: regular
             keys: ['{{{ SSH_KEYS }}}']
-
+          external:
+            class: VLAN
+            tag: 4093
+            mtu: 1500
+            interfaces:
+              - name: '1.1'
+                tagged: false
+            cmpHash: dst-ip
+          external-self:
+            class: SelfIp
+            address: "{{{ SELF_IP_EXTERNAL }}}"
+            vlan: external
+            allowService: default
+            trafficGroup: traffic-group-local-only
+          default: 
+            class: Route
+            gw: '{{{ DEFAULT_ROUTE }}}'
+            network: default
+            mtu: 1500
+          configsync: 
+            class: ConfigSync
+            configsyncIp: '/Common/external-self/address'
 EOF
 
 # # Download

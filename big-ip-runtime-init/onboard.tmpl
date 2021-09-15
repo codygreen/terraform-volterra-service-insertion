@@ -31,6 +31,19 @@ runtime_parameters:
       type: compute
       environment: aws
       field: hostname
+EOF
+if ${create_dg}
+then
+   cat << 'EOF' >> /config/cloud/runtime-init-conf.yaml
+  - name: BIGIP1
+    type: static
+    value: ${bigip1}
+  - name: BIGIP2
+    type: url
+    value: http://169.254.169.254/latest/meta-data/local-ipv4
+EOF
+fi
+cat << 'EOF' >> /config/cloud/runtime-init-conf.yaml
   - name: SELF_IP_EXTERNAL
     type: metadata
     metadataProvider:
@@ -76,6 +89,7 @@ pre_onboard_enabled:
     commands:
       - /usr/bin/setdb provision.extramb 500
       - /usr/bin/setdb restjavad.useextramb true
+      - /usr/bin/setdb setup.run false
 bigip_ready_enabled: []
 extension_packages:
   install_operations:
@@ -93,6 +107,9 @@ extension_packages:
       extensionHash: 9c617f5bb1bb0d08ec095ce568a6d5d2ef162e504cd183fe3540586200f9d950
 extension_services:
   service_operations:
+    - extensionType: do
+      type: url
+      value: https://raw.githubusercontent.com/f5devcentral/terraform-aws-bigip-module/master/config/onboard_do.json
     - extensionType: do
       type: inline
       value:
@@ -123,7 +140,7 @@ extension_services:
             ltm: nominal
           My_System:
             class: System
-            autoPhonehome: true
+            autoPhonehome: false
             hostname: '{{{HOST_NAME}}}'
           admin:
             class: User
@@ -166,6 +183,30 @@ extension_services:
             class: ConfigSync
             configsyncIp: '/Common/external-self/address'
 EOF
+if ${create_dg}
+then
+   cat << 'EOF' >> /config/cloud/runtime-init-conf.yaml
+          asmSync:
+            class: DeviceGroup
+            type: sync-only
+            members:
+              - '{{{ BIGIP1 }}}'
+              - '{{{ BIGIP2 }}}'
+            owner: /Common/asmSync/members/0
+            autoSync: true
+            saveOnAutoSync: true
+            networkFailover: false
+            fullLoadOnSync: false
+            asmSync: true
+          trust:
+            class: DeviceTrust
+            localUsername: '{{{ USER_NAME }}}'
+            localPassword: '{{{ ADMIN_PASS }}}'
+            remoteHost: '{{{ BIGIP1 }}}'
+            remoteUsername: '{{{ USER_NAME }}}'
+            remotePassword: '{{{ ADMIN_PASS }}}'
+EOF
+fi
 
 # # Download
 PACKAGE_URL='https://cdn.f5.com/product/cloudsolutions/f5-bigip-runtime-init/v1.2.1/dist/f5-bigip-runtime-init-1.2.1-1.gz.run'

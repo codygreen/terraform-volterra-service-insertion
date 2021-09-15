@@ -129,18 +129,20 @@ resource "local_file" "key" {
 #
 # Create onboard script
 #
-data "template_file" "user_data" {
+data "template_file" "bigip1_user_data" {
   template = file("${path.module}/onboard.tmpl")
   vars = {
     bigip_username = var.f5_username
     bigip_password = random_string.password.result
+    create_dg      = false
+    bigip1         = ""
   }
 }
 
 #
-# Create BIG-IP
+# Create BIG-IP 1
 #
-module "bigip" {
+module "bigip1" {
   source                     = "github.com/f5devcentral/terraform-aws-bigip-module"
   count                      = var.instance_count
   prefix                     = format("%s-2nic", var.prefix)
@@ -150,5 +152,35 @@ module "bigip" {
   mgmt_securitygroup_ids     = [module.mgmt-network-security-group.security_group_id]
   external_securitygroup_ids = [module.external-network-security-group-public.security_group_id]
   external_subnet_ids        = [{ "subnet_id" = data.aws_subnet.workload.id, "public_ip" = false, "private_ip_primary" = "", "private_ip_secondary" = "" }]
-  custom_user_data           = data.template_file.user_data.rendered
+  custom_user_data           = data.template_file.bigip1_user_data.rendered
+}
+
+#
+# Create device group onboard script
+#
+data "template_file" "bigip2_user_data" {
+  template = file("${path.module}/onboard.tmpl")
+  vars = {
+    bigip_username = var.f5_username
+    bigip_password = random_string.password.result
+    create_dg      = true
+    bigip1         = module.bigip1.0.private_addresses.mgmt_private.private_ip[0]
+  }
+}
+
+#
+# Create BIG-IP 2
+#
+module "bigip2" {
+  source                     = "github.com/f5devcentral/terraform-aws-bigip-module"
+  count                      = var.instance_count
+  prefix                     = format("%s-2nic", var.prefix)
+  ec2_key_name               = aws_key_pair.generated_key.key_name
+  f5_password                = random_string.password.result
+  mgmt_subnet_ids            = [{ "subnet_id" = data.aws_subnet.sli.id, "public_ip" = true, "private_ip_primary" = "" }]
+  mgmt_securitygroup_ids     = [module.mgmt-network-security-group.security_group_id]
+  external_securitygroup_ids = [module.external-network-security-group-public.security_group_id]
+  external_subnet_ids        = [{ "subnet_id" = data.aws_subnet.workload.id, "public_ip" = false, "private_ip_primary" = "", "private_ip_secondary" = "" }]
+  custom_user_data           = data.template_file.bigip2_user_data.rendered
+  f5_ami_search_name         = "F5 BIGIP-16.1* PAYG-Best 200Mbps*"
 }

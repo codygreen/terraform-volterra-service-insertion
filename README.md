@@ -1,4 +1,4 @@
-# terraform-volterra-service-insertion
+# Terraform Volterra Service Insertion
 
 # Deploy Volterra AWS VPC Site
 
@@ -11,19 +11,11 @@ terraform apply
 
 # Deploy BIG-IPs into VPC
 
+The BIG-IP module expects a list of strings that define the allows IP addresses for the management interface.
+
 ```bash
-cd big-ip-deployment
+cd big-ip-runtime-init
 terraform output -state=../volterra-site/terraform.tfstate --json > volterra-site.auto.tfvars.json
-terraform init
-terraform apply
-```
-
-# Configure BIG-IP
-
-```bash
-cd big-ip-configuration
-cp ../big-ip-deployment/DO*.json .
-terraform output -state=../big-ip-deployment/terraform.tfstate --json > big-ip.auto.tfvars.json
 terraform init
 terraform apply
 ```

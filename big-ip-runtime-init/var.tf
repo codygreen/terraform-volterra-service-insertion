@@ -17,12 +17,15 @@ variable "prefix" {
   default     = "tf-aws-bigip"
 }
 
-variable "AllowedIPs" {}
+variable "AllowedIPs" {
+  description = "List of allowed IP addresses to the BIG-IP management interfaces"
+  type        = list(string)
+}
 
 variable "instance_count" {
   description = "Number of Bigip instances to create( From terraform 0.13, module supports count feature to spin mutliple instances )"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "f5_username" {

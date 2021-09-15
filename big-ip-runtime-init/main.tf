@@ -134,8 +134,9 @@ data "template_file" "bigip1_user_data" {
   vars = {
     bigip_username = var.f5_username
     bigip_password = random_string.password.result
-    create_dg      = false
-    bigip1         = ""
+    create_dg      = true
+    bigip1         = module.bigip1.0.private_addresses.mgmt_private.private_ip[0]
+    bigip2         = module.bigip2.0.private_addresses.mgmt_private.private_ip[0]
   }
 }
 
@@ -165,6 +166,7 @@ data "template_file" "bigip2_user_data" {
     bigip_password = random_string.password.result
     create_dg      = true
     bigip1         = module.bigip1.0.private_addresses.mgmt_private.private_ip[0]
+    bigip2         = module.bigip2.0.private_addresses.mgmt_private.private_ip[0]
   }
 }
 

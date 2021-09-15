@@ -39,8 +39,8 @@ then
     type: static
     value: ${bigip1}
   - name: BIGIP2
-    type: url
-    value: http://169.254.169.254/latest/meta-data/local-ipv4
+    type: static
+    value: ${bigip2}
 EOF
 fi
 cat << 'EOF' >> /config/cloud/runtime-init-conf.yaml

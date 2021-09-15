@@ -205,6 +205,42 @@ then
             remoteHost: '{{{ BIGIP1 }}}'
             remoteUsername: '{{{ USER_NAME }}}'
             remotePassword: '{{{ ADMIN_PASS }}}'
+    - extensionType: as3
+      type: inline
+      value:
+        class: AS3
+        action: deploy
+        persist: true
+        declaration:
+          class: ADC
+          schemaVersion: 3.0.0
+          label: Sample 1
+          remark: A HTTP sample application
+          Tenant_1:
+            class: Tenant
+            Shared:
+              class: Application
+              template: shared
+              shared_pool:
+                class: Pool
+                remark: Service 1 shared pool
+                monitors:
+                  - tcp
+                members:
+                  - servicePort: 80
+                    addressDiscovery: fqdn
+                    autoPopulate: true
+                    hostname: httpbin.org
+            Service_1_AZ1:
+              class: Application
+              template: http
+              serviceMain:
+                class: Service_HTTP
+                remark: test
+                virtualAddresses: [
+                  "0.0.0.0"
+                ]
+                pool: /Tenant_1/Shared/shared_pool
 EOF
 fi
 

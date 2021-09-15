@@ -154,6 +154,7 @@ module "bigip1" {
   external_securitygroup_ids = [module.external-network-security-group-public.security_group_id]
   external_subnet_ids        = [{ "subnet_id" = data.aws_subnet.workload.id, "public_ip" = false, "private_ip_primary" = "", "private_ip_secondary" = "" }]
   custom_user_data           = data.template_file.bigip1_user_data.rendered
+  f5_ami_search_name         = "F5 BIGIP-16.1* PAYG-Best 200Mbps*"
 }
 
 #
